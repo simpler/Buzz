@@ -104,6 +104,7 @@ class Curl extends AbstractClient implements ClientInterface
 
     public function __construct()
     {
+        parent::__construct();
         $this->curl = static::createCurlHandle();
     }
 
@@ -135,11 +136,20 @@ class Curl extends AbstractClient implements ClientInterface
     {
         static::setCurlOptsFromRequest($curl, $request);
 
-        curl_setopt($curl, CURLOPT_TIMEOUT, $this->timeout);
-        curl_setopt($curl, CURLOPT_FOLLOWLOCATION, 0 < $this->maxRedirects);
-        curl_setopt($curl, CURLOPT_MAXREDIRS, $this->maxRedirects);
-        curl_setopt($curl, CURLOPT_FAILONERROR, !$this->ignoreErrors);
-        curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, $this->verifyPeer);
+        curl_setopt($curl, CURLOPT_TIMEOUT, $this->getTimeout());
+        curl_setopt($curl, CURLOPT_FOLLOWLOCATION, 0 < $this->getMaxRedirects());
+        curl_setopt($curl, CURLOPT_MAXREDIRS, $this->getMaxRedirects());
+        curl_setopt($curl, CURLOPT_FAILONERROR, !$this->getIgnoreErrors());
+        curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, $this->getVerifyPeer());
+
+        if ($this->getProxyEnabled()) {
+            curl_setopt($curl, CURLOPT_HTTPPROXYTUNNEL, true);
+            curl_setopt($curl, CURLOPT_PROXY, $this->getProxy());
+
+            if (null !== $proxyAuth = $this->getProxyAuth()) {
+                curl_setopt($curl, CURLOPT_PROXYUSERPWD, $proxyAuth);
+            }
+        }
     }
 
     public function __destruct()
